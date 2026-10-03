@@ -173,7 +173,9 @@ internal sealed class Program
                 if (settings.Value.Monitors.TryGetValue(currentMonitor.FriendlyName, out string? playbackDevice) &&
                     !string.IsNullOrEmpty(playbackDevice))
                 {
-                    audioDeviceManager.SetDefaultPlaybackDevice(playbackDevice);
+                    // Ensure rather than Set: Windows applies default-device changes asynchronously, so a switch that
+                    // has not landed yet would otherwise be mistaken for "already there" and silently skipped.
+                    audioDeviceManager.EnsureDefaultPlaybackDevice(playbackDevice);
                 }
                 else
                 {
