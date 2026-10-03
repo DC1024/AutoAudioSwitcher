@@ -41,6 +41,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = $env:GITHUB_REF -replace '^refs/tags/'
-          gh release create --draft --title $tag $tag `
-            Setup\Output\AutoAudioSwitcher-Setup.exe `
-            portable\AutoAudioSwitcher.exe
+          $setup = 'Setup\Output\AutoAudioSwitcher-Setup.exe'
+          $portable = 'portable\AutoAudioSwitcher.exe'
+
+          # Optional per-release notes, so the Chinese description does not have to be pasted by hand after every
+          # tag. Convention: .github/release-notes/<tag>.md, e.g. .github/release-notes/v1.1.1.md
+          $notes = ".github\release-notes\$tag.md"
+          if (Test-Path $notes) {
+            gh release create --draft --title $tag --notes-file $notes $tag $setup $portable
+          } else {
+            gh release create --draft --title $tag $tag $setup $portable
+          }
