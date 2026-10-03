@@ -42,7 +42,9 @@ WizardStyle=classic dynamic
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
 Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
-Name: "cn"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+; ChineseSimplified is not bundled with Inno Setup, so it ships with this repo.
+; Fetched from https://github.com/jrsoftware/issrc (Files/Languages/).
+Name: "cn"; MessagesFile: "Languages\ChineseSimplified.isl"
 
 [Files]
 Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
