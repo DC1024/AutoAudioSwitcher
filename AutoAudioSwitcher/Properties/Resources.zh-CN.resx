@@ -130,205 +130,207 @@
   <data name="TrayIconLightDisabled" type="System.Resources.ResXNullRef, System.Windows.Forms">
     <value />
   </data>
+
+  <!-- 托盘菜单 -->
   <data name="EmptyStringMenuItem" xml:space="preserve">
-    <value>(切り替えない)</value>
+    <value>（不切换）</value>
   </data>
   <data name="Enabled" xml:space="preserve">
-    <value>有効</value>
+    <value>已启用</value>
   </data>
   <data name="Exit" xml:space="preserve">
-    <value>終了</value>
+    <value>退出</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>設定…</value>
+    <value>设置…</value>
   </data>
   <data name="ProgramName" xml:space="preserve">
-    <value>オートオーディオスイッチャー</value>
+    <value>自动音频切换器</value>
   </data>
   <data name="UnhandledException" xml:space="preserve">
-    <value>未処理の例外</value>
+    <value>未处理的异常</value>
   </data>
   <data name="Restart" xml:space="preserve">
-    <value>再起動</value>
+    <value>重新启动</value>
   </data>
   <data name="OpenLogDirectory" xml:space="preserve">
-    <value>ログのディレクトリを開く</value>
+    <value>打开日志目录</value>
   </data>
 
-  <!-- 設定ウィンドウ：共通 -->
+  <!-- 设置窗口：通用 -->
   <data name="SettingsTitle" xml:space="preserve">
-    <value>設定</value>
+    <value>设置</value>
   </data>
   <data name="Ok" xml:space="preserve">
-    <value>OK</value>
+    <value>确定</value>
   </data>
   <data name="Cancel" xml:space="preserve">
-    <value>キャンセル</value>
+    <value>取消</value>
   </data>
   <data name="Apply" xml:space="preserve">
-    <value>適用</value>
+    <value>应用</value>
   </data>
   <data name="Browse" xml:space="preserve">
-    <value>参照…</value>
+    <value>浏览…</value>
   </data>
   <data name="General" xml:space="preserve">
-    <value>全般</value>
+    <value>常规</value>
   </data>
   <data name="Monitors" xml:space="preserve">
-    <value>モニター</value>
+    <value>显示器</value>
   </data>
   <data name="Updates" xml:space="preserve">
     <value>更新</value>
   </data>
   <data name="About" xml:space="preserve">
-    <value>このアプリについて</value>
+    <value>关于</value>
   </data>
 
-  <!-- 設定ウィンドウ：全般 -->
+  <!-- 设置窗口：常规页 -->
   <data name="RoutingModeGroup" xml:space="preserve">
-    <value>切り替えモード</value>
+    <value>切换模式</value>
   </data>
   <data name="RoutingModeGlobal" xml:space="preserve">
-    <value>フォーカスされたウィンドウに追従（全体）</value>
+    <value>跟随焦点窗口（全局）</value>
   </data>
   <data name="RoutingModeGlobalDescription" xml:space="preserve">
-    <value>現在フォーカスされているウィンドウのあるモニターに音声が追従します。すべてのアプリが同じ既定の再生デバイスを共有します。従来の動作で、最も安定しています。</value>
+    <value>音频跟随当前获得焦点的窗口所在显示器。所有应用共用同一个默认播放设备，行为与原版一致，最稳定。</value>
   </data>
   <data name="RoutingModePerApp" xml:space="preserve">
-    <value>各ウィンドウに追従（アプリごと）</value>
+    <value>跟随各自窗口（按应用）</value>
   </data>
   <data name="RoutingModePerAppDescription" xml:space="preserve">
-    <value>音声を再生しているアプリごとに、そのアプリ自身のウィンドウがあるモニターに割り当てられたデバイスへ出力します。複数のアプリを同時に別々の出力先で再生できます。ウィンドウが最小化または非表示の場合は、最後に表示されていた位置を使用します。</value>
+    <value>每个正在播放音频的应用，按它自己的窗口所在显示器决定输出设备。互不干扰，可同时在不同显示器播放。窗口最小化或隐藏时，沿用该窗口最后所在的位置。</value>
   </data>
   <data name="RoutingModePerAppUnavailable" xml:space="preserve">
-    <value>このシステムではアプリごとのルーティングを利用できません（使用可能なオーディオポリシーインターフェイスが見つかりません）。</value>
+    <value>按应用路由在当前系统上不可用（未找到可用的音频策略接口）。</value>
   </data>
   <data name="EnableSwitching" xml:space="preserve">
-    <value>自動切り替えを有効にする</value>
+    <value>启用自动切换</value>
   </data>
   <data name="StartWithWindows" xml:space="preserve">
-    <value>サインイン時に自動起動する</value>
+    <value>开机时自动启动</value>
   </data>
   <data name="Language" xml:space="preserve">
-    <value>表示言語</value>
+    <value>界面语言</value>
   </data>
   <data name="LanguageSystem" xml:space="preserve">
-    <value>システムに合わせる</value>
+    <value>跟随系统</value>
   </data>
   <data name="LanguageRestartRequired" xml:space="preserve">
-    <value>言語の変更はプログラムの再起動後に反映されます。</value>
+    <value>语言更改将在重启程序后生效。</value>
   </data>
   <data name="LogLevel" xml:space="preserve">
-    <value>ログレベル</value>
+    <value>日志级别</value>
   </data>
   <data name="LogLevelDebug" xml:space="preserve">
-    <value>デバッグ（詳細）</value>
+    <value>调试（详细）</value>
   </data>
   <data name="LogLevelInformation" xml:space="preserve">
-    <value>情報</value>
+    <value>信息</value>
   </data>
   <data name="LogLevelWarning" xml:space="preserve">
     <value>警告</value>
   </data>
   <data name="LogLevelError" xml:space="preserve">
-    <value>エラー（既定）</value>
+    <value>错误（默认）</value>
   </data>
   <data name="OpenLogDirectoryButton" xml:space="preserve">
-    <value>ログのディレクトリを開く</value>
+    <value>打开日志目录</value>
   </data>
 
-  <!-- 設定ウィンドウ：モニター -->
+  <!-- 设置窗口：显示器页 -->
   <data name="MonitorMappingDescription" xml:space="preserve">
-    <value>モニターごとに再生デバイスを指定します。アプリごとのモードでは、これが各アプリの音声の出力先を決めます。</value>
+    <value>为每个显示器指定播放设备。在“按应用”模式下，这决定了每个应用音频的去向。</value>
   </data>
   <data name="ColumnMonitor" xml:space="preserve">
-    <value>モニター</value>
+    <value>显示器</value>
   </data>
   <data name="ColumnPlaybackDevice" xml:space="preserve">
-    <value>再生デバイス</value>
+    <value>播放设备</value>
   </data>
   <data name="NoMonitorsDetected" xml:space="preserve">
-    <value>モニターが検出されませんでした。</value>
+    <value>未检测到显示器。</value>
   </data>
   <data name="DontSwitch" xml:space="preserve">
-    <value>(切り替えない)</value>
+    <value>（不切换）</value>
   </data>
   <data name="PlaybackDeviceNotFound" xml:space="preserve">
-    <value>（デバイスが接続されていません：{0}）</value>
+    <value>（设备未连接：{0}）</value>
   </data>
 
-  <!-- 設定ウィンドウ：更新 -->
+  <!-- 设置窗口：更新页 -->
   <data name="CheckForUpdatesOnStartup" xml:space="preserve">
-    <value>起動時に更新を確認する</value>
+    <value>启动时检查更新</value>
   </data>
   <data name="CheckNow" xml:space="preserve">
-    <value>今すぐ確認</value>
+    <value>立即检查</value>
   </data>
   <data name="CurrentVersion" xml:space="preserve">
-    <value>現在のバージョン：{0}</value>
+    <value>当前版本：{0}</value>
   </data>
   <data name="UpdateChecking" xml:space="preserve">
-    <value>更新を確認しています…</value>
+    <value>正在检查更新…</value>
   </data>
   <data name="UpdateUpToDate" xml:space="preserve">
-    <value>最新バージョンです。</value>
+    <value>已是最新版本。</value>
   </data>
   <data name="UpdateAvailable" xml:space="preserve">
-    <value>バージョン {0} が利用可能です（現在 {1}）。</value>
+    <value>发现新版本 {0}（当前 {1}）。</value>
   </data>
   <data name="UpdateDownloading" xml:space="preserve">
-    <value>{0} をダウンロードしています…</value>
+    <value>正在下载 {0}…</value>
   </data>
   <data name="UpdateReadyToInstall" xml:space="preserve">
-    <value>更新をダウンロードしました。インストールを完了するためにプログラムを再起動します。</value>
+    <value>更新已下载完成，程序将重启以完成安装。</value>
   </data>
   <data name="UpdateFailed" xml:space="preserve">
-    <value>更新を確認できませんでした：{0}</value>
+    <value>检查更新失败：{0}</value>
   </data>
   <data name="UpdateNotSupported" xml:space="preserve">
-    <value>このインストールでは自動更新を利用できません。リリースページから手動でダウンロードしてください。</value>
+    <value>当前运行方式不支持自动更新，请手动前往发布页面下载。</value>
   </data>
   <data name="UpdateInstallNow" xml:space="preserve">
-    <value>今すぐ更新</value>
+    <value>立即更新</value>
   </data>
   <data name="UpdateInstallLater" xml:space="preserve">
-    <value>後で</value>
+    <value>稍后</value>
   </data>
   <data name="UpdateReleaseNotes" xml:space="preserve">
     <value>更新内容：</value>
   </data>
   <data name="OpenReleasesPage" xml:space="preserve">
-    <value>リリースページを開く</value>
+    <value>打开发布页面</value>
   </data>
 
-  <!-- 設定ウィンドウ：このアプリについて -->
+  <!-- 设置窗口：关于页 -->
   <data name="AboutDescription" xml:space="preserve">
-    <value>ウィンドウのあるモニターに基づいて既定の再生デバイスを切り替えます。</value>
+    <value>根据窗口所在的显示器自动切换默认播放设备。</value>
   </data>
   <data name="AboutLicense" xml:space="preserve">
-    <value>Apache License, Version 2.0 の下で公開されています。</value>
+    <value>基于 Apache License 2.0 授权发布。</value>
   </data>
   <data name="AboutBasedOn" xml:space="preserve">
-    <value>Max Kagamine 氏の Auto Audio Switcher を基にしています。</value>
+    <value>基于 Max Kagamine 的 Auto Audio Switcher 二次开发。</value>
   </data>
   <data name="OpenSourcePage" xml:space="preserve">
-    <value>プロジェクトページを開く</value>
+    <value>打开项目主页</value>
   </data>
 
-  <!-- 通知 -->
+  <!-- 提示与通知 -->
   <data name="BalloonUpdateAvailableTitle" xml:space="preserve">
-    <value>更新があります</value>
+    <value>发现新版本</value>
   </data>
   <data name="BalloonUpdateAvailableText" xml:space="preserve">
-    <value>オートオーディオスイッチャー {0} が公開されました。クリックして詳細を表示します。</value>
+    <value>自动音频切换器 {0} 已发布，点击查看详情。</value>
   </data>
   <data name="BalloonSettingsSaved" xml:space="preserve">
-    <value>設定を保存しました。</value>
+    <value>设置已保存。</value>
   </data>
   <data name="ErrorSavingSettings" xml:space="preserve">
-    <value>設定を保存できませんでした。</value>
+    <value>保存设置失败。</value>
   </data>
   <data name="NotificationTitle" xml:space="preserve">
-    <value>オートオーディオスイッチャー</value>
+    <value>自动音频切换器</value>
   </data>
 </root>

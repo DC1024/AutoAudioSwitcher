@@ -20,8 +20,13 @@ internal sealed class Program
 {
     private static readonly TimeSpan WindowsAutomaticDefaultDeviceChangeThreshold = TimeSpan.FromSeconds(2);
 
-    private const string LogsDirectory = "logs";
+    private const string LogsDirectoryName = "logs";
     public const string SettingsFile = "appsettings.json";
+
+    /// <summary>
+    /// Directory the rolling log files are written to, relative to the working directory.
+    /// </summary>
+    public static string LogsDirectory => LogsDirectoryName;
 
     private static readonly LoggingLevelSwitch levelSwitch = new(LogEventLevel.Error);
     private static ServiceProvider? provider;
@@ -69,6 +74,14 @@ internal sealed class Program
         services.AddSingleton<CurrentMonitorMonitor>();
         services.AddSingleton<TrayIcon>();
         services.AddSingleton<WindowMessageListener>();
+        services.AddSingleton<UpdateService>();
+
+        // Per-app routing (mode B). ProcessAudioPolicyConfig is constructed eagerly because probing for the
+        // undocumented interface is the one part that can legitimately fail, and we want to know at startup.
+        services.AddSingleton<AudioSessionMonitor>();
+        services.AddSingleton<WindowPositionTracker>();
+        services.AddSingleton(sp => new ProcessAudioPolicyConfig(sp.GetRequiredService<ILogger>()));
+        services.AddSingleton<PerAppAudioRouter>();
 
         return services.BuildServiceProvider();
     }
@@ -84,7 +97,9 @@ internal sealed class Program
 
         Environment.CurrentDirectory = AppContext.BaseDirectory;
 
-        //CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = new("ja-JP");
+        // Must happen before any control or resource string is read: WinForms captures a control's text when it is
+        // constructed, so applying the language after the tray icon exists would only half-work.
+        AppEnvironment.ApplyLanguage(ReadConfiguredLanguage());
 
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         Application.ThreadException += (sender, e) => HandleCrash(e.Exception);
@@ -141,8 +156,11 @@ internal sealed class Program
                 .Where(x => x is not null && settings.Value.Enabled)
                 .Do(_ => logger.Information("Detected Windows automatically changing the default audio device. Rechecking the current monitor..."))!;
 
+        // Mode A (Global): follow the foreground window. This is the original behaviour — whichever window has focus
+        // decides the system default playback device, and therefore where all audio goes.
         currentMonitorMonitor.CurrentMonitor
             .Merge(currentMonitorWhenWindowsChangesDefaultDeviceAutomatically)
+            .Where(_ => settings.Value.Mode is AudioRoutingMode.Global)
             .Subscribe(currentMonitor =>
             {
                 if (!settings.Value.Enabled)
@@ -162,6 +180,10 @@ internal sealed class Program
                     logger.Information("No playback device set for \"{CurrentMonitor}\"", currentMonitor.FriendlyName);
                 }
             });
+
+        // Mode B (PerApp): follow each application's own window. The router owns its own subscriptions and decides
+        // internally whether the current mode applies, so simply resolving it starts it.
+        provider.GetRequiredService<PerAppAudioRouter>();
 
         provider.GetRequiredService<WindowMessageListener>();
         provider.GetRequiredService<TrayIcon>().Show();
@@ -199,6 +221,30 @@ internal sealed class Program
         catch (Exception ex)
         {
             logger.Error(ex, "Failed to add new monitors to appsettings.json");
+        }
+    }
+
+    /// <summary>
+    /// Reads the language tag out of the settings file before the DI container exists, so the language can be
+    /// applied ahead of any localized text.
+    /// </summary>
+    private static string ReadConfiguredLanguage()
+    {
+        try
+        {
+            if (!File.Exists(SettingsFile))
+            {
+                return "";
+            }
+
+            using FileStream file = File.OpenRead(SettingsFile);
+            Settings? settings = JsonSerializer.Deserialize(file, SettingsSerializerContext.Default.Settings);
+            return settings?.Language ?? "";
+        }
+        catch
+        {
+            // A corrupt settings file must not prevent startup; ConfigureServices will handle it properly.
+            return "";
         }
     }
 

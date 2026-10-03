@@ -96,6 +96,16 @@ internal sealed class AudioDeviceManager : IDisposable
     public IObservable<IEnumerable<string>> PlaybackDevices { get; }
 
     /// <summary>
+    /// The names of the active playback devices as of right now, sorted. A synchronous convenience for UI code,
+    /// which needs a value to populate a control rather than a stream.
+    /// </summary>
+    public IReadOnlyList<string> CurrentPlaybackDeviceNames =>
+        [.. EnumeratePlaybackDevices()
+            .Select(GetDeviceName)
+            .Distinct()
+            .Order()];
+
+    /// <summary>
     /// The names of the default multimedia and communications playback devices. Observers will receive the latest value
     /// immediately.
     /// </summary>
@@ -135,6 +145,12 @@ internal sealed class AudioDeviceManager : IDisposable
 
     private MMDeviceCollection EnumeratePlaybackDevices() =>
         deviceEnumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+
+    /// <summary>
+    /// The active render endpoints, for callers that need to resolve a device name to its endpoint ID (per-app
+    /// routing addresses devices by ID rather than by name).
+    /// </summary>
+    public MMDeviceCollection EnumerateActivePlaybackDevices() => EnumeratePlaybackDevices();
 
     private static string GetDeviceName(MMDevice device) =>
         device.Properties?[PKey.DeviceDescription]?.Value.ToString() ?? "<Unknown>";

@@ -1,4 +1,4 @@
-[日本語](README.ja.md)
+[日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
 # Auto Audio Switcher
 
@@ -8,9 +8,17 @@ Switches the default playback device based on the focused window's monitor.
 
 For example, if you open a media player and Win+Shift+Left/Right it over to the TV, the playback device will automatically change to the TV. Alt+Tab back to the primary display, and the playback device switches back to the speakers.
 
+> **This is DC1024's fork.** It adds a portable single-file build, a second "per-application" routing mode, a
+> graphical settings window, Simplified Chinese / Japanese localization, and self-updating. See the
+> [中文说明](README.zh-CN.md) for details.
+
 ## Installing
 
-[**Download AutoAudioSwitcher-Setup.exe**](https://github.com/maxkagamine/AutoAudioSwitcher/releases/latest/download/AutoAudioSwitcher-Setup.exe)
+**Portable (recommended, no install):**
+[**Download AutoAudioSwitcher.exe**](https://github.com/DC1024/AutoAudioSwitcher/releases/latest/download/AutoAudioSwitcher.exe)
+
+**Installer:**
+[**Download AutoAudioSwitcher-Setup.exe**](https://github.com/DC1024/AutoAudioSwitcher/releases/latest/download/AutoAudioSwitcher-Setup.exe)
 
 ## Usage notes
 
@@ -25,6 +33,7 @@ For example, if you open a media player and Win+Shift+Left/Right it over to the 
 ## Legal stuff
 
 Copyright © Max Kagamine  
+Modifications Copyright © DC1024  
 Licensed under the [Apache License, Version 2.0](LICENSE.txt)
 
 ## Illegal stuff

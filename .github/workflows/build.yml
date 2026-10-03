@@ -26,7 +26,13 @@ jobs:
             $ver = '0.0.0'
           }
 
+          # Framework-dependent build, consumed by the Inno Setup installer.
           dotnet.exe publish AutoAudioSwitcher -o publish -p:Version="$ver"
+
+          # Self-contained single-file build. This is what the in-app updater downloads, so
+          # CanSelfUpdate requires that no sibling AutoAudioSwitcher.dll exists next to the exe.
+          dotnet.exe publish AutoAudioSwitcher -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:Version="$ver" -o portable
+
           & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' .\Setup\Setup.iss
 
       - name: Create release draft
@@ -35,4 +41,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = $env:GITHUB_REF -replace '^refs/tags/'
-          gh release create --draft --title $tag $tag Setup\Output\AutoAudioSwitcher-Setup.exe
+          gh release create --draft --title $tag $tag `
+            Setup\Output\AutoAudioSwitcher-Setup.exe `
+            portable\AutoAudioSwitcher.exe

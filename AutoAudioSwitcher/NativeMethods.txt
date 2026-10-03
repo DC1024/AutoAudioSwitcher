@@ -3,12 +3,15 @@
 SetWinEventHook
 EVENT_SYSTEM_FOREGROUND
 EVENT_OBJECT_LOCATIONCHANGE
+EVENT_OBJECT_CREATE
+EVENT_OBJECT_DESTROY
 WINEVENT_OUTOFCONTEXT
 OBJECT_IDENTIFIER
 
 GetForegroundWindow
 
 MonitorFromWindow
+MonitorFromPoint
 
 GetMonitorInfo
 MONITORINFOEXW
@@ -25,4 +28,33 @@ WM_DISPLAYCHANGE
 WM_QUERYENDSESSION
 WM_ENDSESSION
 WM_CLOSE
+
+// Per-app routing (mode B): enumerate audio sessions and inspect window geometry
+IAudioSessionManager2
+IAudioSessionControl
+IAudioSessionControl2
+IAudioSessionEnumerator
+AudioSessionState
+MMDeviceEnumerator
+IMMDeviceEnumerator
+DataFlow
+DEVICE_STATE
+
+// Window geometry: decide which monitor a process's window sits on
+// (including when the window is minimized, by falling back to its last known position).
+GetWindowRect
+GetWindowText
+GetWindowTextLength
+IsIconic
+IsWindowVisible
+IsWindow
+GetWindow
+GetAncestor
+GetWindowThreadProcessId
+EnumWindows
+GetLastActivePopup
+RECT
+HWND
+GET_ANCESTOR_FLAGS
+GET_WINDOW_CMD
 

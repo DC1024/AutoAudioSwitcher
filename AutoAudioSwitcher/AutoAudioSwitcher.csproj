@@ -11,12 +11,25 @@
 
     <Product>Auto Audio Switcher</Product>
     <AssemblyTitle>Auto Audio Switcher</AssemblyTitle>
-    <Authors>Max Kagamine</Authors>
-    <Copyright>Copyright (c) Max Kagamine</Copyright>
+    <Authors>DC1024; Max Kagamine</Authors>
+    <Copyright>Copyright (c) Max Kagamine; modifications Copyright (c) DC1024</Copyright>
 
     <UseWindowsForms>true</UseWindowsForms>
     <NeutralLanguage>en</NeutralLanguage>
+
+    <!-- The updater reads this to locate releases, so a fork only has to change one property. -->
+    <UpdateRepository Condition="'$(UpdateRepository)' == ''">DC1024/AutoAudioSwitcher</UpdateRepository>
+    <Version Condition="'$(Version)' == ''">1.1.0</Version>
+    <!-- Keep the file/assembly/informational versions on the same three-part number the updater compares. -->
+    <AssemblyVersion>$(Version.Split('-')[0])</AssemblyVersion>
+    <FileVersion>$(Version.Split('-')[0])</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Surfaced to UpdateService via AssemblyMetadataAttribute. -->
+    <AssemblyMetadata Include="UpdateRepository" Value="$(UpdateRepository)" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CoreAudio" Version="1.40.0" />
@@ -46,6 +59,17 @@
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <!-- Localized satellite resources. No generator: the strongly typed accessors live in the neutral
+         Resources.Designer.cs and pick the culture at runtime via ResourceManager. -->
+    <EmbeddedResource Update="Properties\Resources.ja.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Properties\Resources.zh-CN.resx">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Properties\Resources.zh-Hans.resx">
+      <Generator></Generator>
     </EmbeddedResource>
   </ItemGroup>
 

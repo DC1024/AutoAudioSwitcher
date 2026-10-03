@@ -139,6 +139,9 @@
   <data name="Exit" xml:space="preserve">
     <value>Exit</value>
   </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings…</value>
+  </data>
   <data name="ProgramName" xml:space="preserve">
     <value>Auto Audio Switcher</value>
   </data>
@@ -150,5 +153,182 @@
   </data>
   <data name="OpenLogDirectory" xml:space="preserve">
     <value>Open log directory</value>
+  </data>
+
+  <!-- Settings window: general -->
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Monitors" xml:space="preserve">
+    <value>Monitors</value>
+  </data>
+  <data name="Updates" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+  </data>
+
+  <!-- Settings window: general page -->
+  <data name="RoutingModeGroup" xml:space="preserve">
+    <value>Switching mode</value>
+  </data>
+  <data name="RoutingModeGlobal" xml:space="preserve">
+    <value>Follow the focused window (global)</value>
+  </data>
+  <data name="RoutingModeGlobalDescription" xml:space="preserve">
+    <value>Audio follows the monitor of whichever window currently has focus. Every application shares one default playback device. This is the original behaviour and the most predictable.</value>
+  </data>
+  <data name="RoutingModePerApp" xml:space="preserve">
+    <value>Follow each window (per application)</value>
+  </data>
+  <data name="RoutingModePerAppDescription" xml:space="preserve">
+    <value>Each application playing audio is routed to the device assigned to the monitor its own window is on, so several apps can play through different outputs at once. When a window is minimized or hidden, the last position it was seen at is used.</value>
+  </data>
+  <data name="RoutingModePerAppUnavailable" xml:space="preserve">
+    <value>Per-application routing is unavailable on this system (no usable audio policy interface was found).</value>
+  </data>
+  <data name="EnableSwitching" xml:space="preserve">
+    <value>Enable auto-switching</value>
+  </data>
+  <data name="StartWithWindows" xml:space="preserve">
+    <value>Start automatically when I sign in</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="LanguageSystem" xml:space="preserve">
+    <value>Follow system</value>
+  </data>
+  <data name="LanguageRestartRequired" xml:space="preserve">
+    <value>Language changes take effect after restarting the program.</value>
+  </data>
+  <data name="LogLevel" xml:space="preserve">
+    <value>Log level</value>
+  </data>
+  <data name="LogLevelDebug" xml:space="preserve">
+    <value>Debug (verbose)</value>
+  </data>
+  <data name="LogLevelInformation" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="LogLevelWarning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="LogLevelError" xml:space="preserve">
+    <value>Error (default)</value>
+  </data>
+  <data name="OpenLogDirectoryButton" xml:space="preserve">
+    <value>Open log directory</value>
+  </data>
+
+  <!-- Settings window: monitors page -->
+  <data name="MonitorMappingDescription" xml:space="preserve">
+    <value>Choose a playback device for each monitor. In per-application mode this decides where each application's audio goes.</value>
+  </data>
+  <data name="ColumnMonitor" xml:space="preserve">
+    <value>Monitor</value>
+  </data>
+  <data name="ColumnPlaybackDevice" xml:space="preserve">
+    <value>Playback device</value>
+  </data>
+  <data name="NoMonitorsDetected" xml:space="preserve">
+    <value>No monitors detected.</value>
+  </data>
+  <data name="DontSwitch" xml:space="preserve">
+    <value>(Don't switch)</value>
+  </data>
+  <data name="PlaybackDeviceNotFound" xml:space="preserve">
+    <value>(device not connected: {0})</value>
+  </data>
+
+  <!-- Settings window: updates page -->
+  <data name="CheckForUpdatesOnStartup" xml:space="preserve">
+    <value>Check for updates on startup</value>
+  </data>
+  <data name="CheckNow" xml:space="preserve">
+    <value>Check now</value>
+  </data>
+  <data name="CurrentVersion" xml:space="preserve">
+    <value>Current version: {0}</value>
+  </data>
+  <data name="UpdateChecking" xml:space="preserve">
+    <value>Checking for updates…</value>
+  </data>
+  <data name="UpdateUpToDate" xml:space="preserve">
+    <value>You're up to date.</value>
+  </data>
+  <data name="UpdateAvailable" xml:space="preserve">
+    <value>Version {0} is available (you have {1}).</value>
+  </data>
+  <data name="UpdateDownloading" xml:space="preserve">
+    <value>Downloading {0}…</value>
+  </data>
+  <data name="UpdateReadyToInstall" xml:space="preserve">
+    <value>The update has been downloaded. The program will restart to finish installing.</value>
+  </data>
+  <data name="UpdateFailed" xml:space="preserve">
+    <value>Could not check for updates: {0}</value>
+  </data>
+  <data name="UpdateNotSupported" xml:space="preserve">
+    <value>Automatic updates are not supported for this installation. Please download the new version from the releases page.</value>
+  </data>
+  <data name="UpdateInstallNow" xml:space="preserve">
+    <value>Update now</value>
+  </data>
+  <data name="UpdateInstallLater" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="UpdateReleaseNotes" xml:space="preserve">
+    <value>What's new:</value>
+  </data>
+  <data name="OpenReleasesPage" xml:space="preserve">
+    <value>Open releases page</value>
+  </data>
+
+  <!-- Settings window: about page -->
+  <data name="AboutDescription" xml:space="preserve">
+    <value>Switches the default playback device based on the monitor a window is on.</value>
+  </data>
+  <data name="AboutLicense" xml:space="preserve">
+    <value>Released under the Apache License, Version 2.0.</value>
+  </data>
+  <data name="AboutBasedOn" xml:space="preserve">
+    <value>Based on Auto Audio Switcher by Max Kagamine.</value>
+  </data>
+  <data name="OpenSourcePage" xml:space="preserve">
+    <value>Open project page</value>
+  </data>
+
+  <!-- Notifications -->
+  <data name="BalloonUpdateAvailableTitle" xml:space="preserve">
+    <value>Update available</value>
+  </data>
+  <data name="BalloonUpdateAvailableText" xml:space="preserve">
+    <value>Auto Audio Switcher {0} is available. Click to see the details.</value>
+  </data>
+  <data name="BalloonSettingsSaved" xml:space="preserve">
+    <value>Settings saved.</value>
+  </data>
+  <data name="ErrorSavingSettings" xml:space="preserve">
+    <value>Failed to save settings.</value>
+  </data>
+  <data name="NotificationTitle" xml:space="preserve">
+    <value>Auto Audio Switcher</value>
   </data>
 </root>

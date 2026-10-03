@@ -16,13 +16,13 @@
 #pragma message "Version is " + Version
 
 [Setup]
-AppCopyright=Copyright (c) Max Kagamine
+AppCopyright=Copyright (c) Max Kagamine; modifications Copyright (c) DC1024
 AppId={{F09F929B-E98F-A1E9-9FB3-E383AAE383B3}
 AppName=Auto Audio Switcher
-AppPublisher=Max Kagamine
-AppPublisherURL=https://github.com/maxkagamine/AutoAudioSwitcher
-AppSupportURL=https://github.com/maxkagamine/AutoAudioSwitcher/issues
-AppUpdatesURL=https://github.com/maxkagamine/AutoAudioSwitcher/releases
+AppPublisher=DC1024
+AppPublisherURL=https://github.com/DC1024/AutoAudioSwitcher
+AppSupportURL=https://github.com/DC1024/AutoAudioSwitcher/issues
+AppUpdatesURL=https://github.com/DC1024/AutoAudioSwitcher/releases
 AppVerName=Auto Audio Switcher {#Version}
 AppVersion={#Version}
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -42,6 +42,7 @@ WizardStyle=classic dynamic
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
 Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
+Name: "cn"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Files]
 Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
