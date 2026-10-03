@@ -177,9 +177,20 @@ internal sealed class Program
                 }
                 else
                 {
-                    logger.Information("No playback device set for \"{CurrentMonitor}\"", currentMonitor.FriendlyName);
+                    // Warning rather than Information: an unconfigured monitor means mode A does nothing at all for it,
+                    // which is indistinguishable from "the feature is broken" unless the log says so.
+                    logger.Warning("No playback device set for \"{CurrentMonitor}\"; not switching. Configure it in the settings window (tray icon > Settings...).",
+                        currentMonitor.FriendlyName);
                 }
             });
+
+        WarnAboutUnconfiguredMonitors(settings, connectedMonitorsMonitor, logger);
+
+        // Also re-check whenever the monitor set changes, so plugging in a new display surfaces it immediately.
+        connectedMonitorsMonitor.ConnectedMonitors
+            .Skip(1)
+            .Subscribe(_ => WarnAboutUnconfiguredMonitors(settings, connectedMonitorsMonitor, logger));
+
 
         // Mode B (PerApp): follow each application's own window. The router owns its own subscriptions and decides
         // internally whether the current mode applies, so simply resolving it starts it.
@@ -189,6 +200,45 @@ internal sealed class Program
         provider.GetRequiredService<TrayIcon>().Show();
 
         Application.Run();
+    }
+
+    /// <summary>
+    /// Logs a warning for every connected monitor that has no playback device assigned.
+    /// </summary>
+    /// <remarks>
+    /// A monitor whose mapping is the empty string is skipped by the routing logic entirely, so mode A appears to
+    /// "work once and then stop" when in fact it never ran for that display. Saying so up front turns a confusing
+    /// bug report into a one-line fix.
+    /// </remarks>
+    private static void WarnAboutUnconfiguredMonitors(
+        IBehaviorObservable<Settings> settings,
+        ConnectedMonitorsMonitor connectedMonitorsMonitor,
+        ILogger logger)
+    {
+        try
+        {
+            if (settings.Value.Mode is not AudioRoutingMode.Global)
+            {
+                // Mode B decides per application, and its own router reports what it could not resolve.
+                return;
+            }
+
+            string[] unconfigured = [.. connectedMonitorsMonitor.CurrentConnectedMonitors
+                .Select(m => m.FriendlyName)
+                .Where(name => !settings.Value.Monitors.TryGetValue(name, out string? device) || string.IsNullOrEmpty(device))];
+
+            if (unconfigured.Length > 0)
+            {
+                logger.Warning(
+                    "{Count} connected monitor(s) have no playback device set ({Monitors}). Global mode will not switch audio for them. Open the settings window (tray icon > Settings...) to assign one.",
+                    unconfigured.Length, unconfigured);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Best-effort diagnostics only; never let this keep the app from starting.
+            logger.Debug(ex, "Could not check for unconfigured monitors");
+        }
     }
 
     private static void AddNewMonitorsToSettings(

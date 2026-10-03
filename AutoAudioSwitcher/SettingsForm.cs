@@ -43,6 +43,7 @@ internal sealed class SettingsForm : Form
     private static readonly CompositeFormat UpdateDownloadingFormat = CompositeFormat.Parse(Resources.UpdateDownloading);
     private static readonly CompositeFormat UpdateFailedFormat = CompositeFormat.Parse(Resources.UpdateFailed);
     private static readonly CompositeFormat PlaybackDeviceNotFoundFormat = CompositeFormat.Parse(Resources.PlaybackDeviceNotFound);
+    private static readonly CompositeFormat UnconfiguredMonitorsWarningFormat = CompositeFormat.Parse(Resources.UnconfiguredMonitorsWarning);
 
     private readonly IBehaviorObservable<Settings> settings;
     private readonly ConnectedMonitorsMonitor connectedMonitorsMonitor;
@@ -65,6 +66,7 @@ internal sealed class SettingsForm : Form
 
     // Monitors page
     private DataGridView monitorGrid = null!;
+    private Label unconfiguredWarningLabel = null!;
 
     // Updates page
     private CheckBox checkOnStartupCheckBox = null!;
@@ -355,13 +357,25 @@ internal sealed class SettingsForm : Form
         {
             Text = Resources.MonitorMappingDescription,
             Location = new Point(14, 14),
-            Size = new Size(500, 34),
+            AutoSize = true,
+            MaximumSize = new Size(500, 0),
             ForeColor = SystemColors.GrayText,
+        };
+
+        // Sits directly under the description and is only visible when at least one connected monitor has no playback
+        // device assigned. Without it, mode A silently does nothing for that monitor and the failure looks like a bug.
+        unconfiguredWarningLabel = new Label
+        {
+            Location = new Point(14, 40),
+            AutoSize = true,
+            MaximumSize = new Size(500, 0),
+            ForeColor = Color.Firebrick,
+            Visible = false,
         };
 
         monitorGrid = new DataGridView
         {
-            Location = new Point(14, 54),
+            Location = new Point(14, 66),
             Size = new Size(500, 300),
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
             AllowUserToAddRows = false,
@@ -409,7 +423,7 @@ internal sealed class SettingsForm : Form
             }
         };
 
-        page.Controls.AddRange([description, monitorGrid]);
+        page.Controls.AddRange([description, unconfiguredWarningLabel, monitorGrid]);
 
         PopulateMonitorGrid();
 
@@ -639,6 +653,11 @@ internal sealed class SettingsForm : Form
             selections.TryGetValue(monitorName, out string? configured);
             configured ??= "";
 
+            if (string.IsNullOrEmpty(configured))
+            {
+                monitorGrid.Rows[index].Cells[0].Style.ForeColor = Color.Firebrick;
+            }
+
             monitorGrid.Rows[index].Cells[1].Value = BuildDeviceList(knownDevices, configured);
 
             // The combo column can't be set per cell via the column's Items, so stash the list and set the value.
@@ -653,6 +672,8 @@ internal sealed class SettingsForm : Form
             int index = monitorGrid.Rows.Add();
             monitorGrid.Rows[index].Cells[0].Value = Resources.NoMonitorsDetected;
         }
+
+        RefreshUnconfiguredWarning();
     }
 
     private static string[] BuildDeviceList(string[] knownDevices, string configured) =>
@@ -699,7 +720,40 @@ internal sealed class SettingsForm : Form
 
         pending = pending with { Monitors = monitors };
 
+        // Update the row's unconfigured marker and the warning label in place. Repopulating the whole grid here would
+        // steal the selection out from under the user mid-edit.
+        monitorGrid.Rows[rowIndex].Cells[0].Style.ForeColor =
+            string.IsNullOrEmpty(device) ? Color.Firebrick : monitorGrid.ForeColor;
+        RefreshUnconfiguredWarning();
+
         logger.Debug("Monitor \"{Monitor}\" set to \"{Device}\" in the settings window.", monitorName, device);
+    }
+
+    /// <summary>
+    /// Recomputes the "N monitors are unconfigured" warning from the current grid contents.
+    /// </summary>
+    private void RefreshUnconfiguredWarning()
+    {
+        int unconfiguredCount = 0;
+        for (int row = 0; row < monitorGrid.Rows.Count; row++)
+        {
+            string? monitorName = monitorGrid.Rows[row].Cells[0].Value as string;
+            if (string.IsNullOrEmpty(monitorName) || monitorName == Resources.NoMonitorsDetected)
+            {
+                continue;
+            }
+
+            string? value = monitorGrid.Rows[row].Cells[1].Value as string;
+            if (string.IsNullOrEmpty(value) || value == Resources.DontSwitch)
+            {
+                unconfiguredCount++;
+            }
+        }
+
+        unconfiguredWarningLabel.Text = unconfiguredCount == 0
+            ? ""
+            : string.Format(CultureInfo.CurrentCulture, UnconfiguredMonitorsWarningFormat, unconfiguredCount);
+        unconfiguredWarningLabel.Visible = unconfiguredCount > 0;
     }
 
     private async void OnOkClicked(object? sender, EventArgs e)

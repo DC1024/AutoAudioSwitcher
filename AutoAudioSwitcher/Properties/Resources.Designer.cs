@@ -415,6 +415,22 @@ namespace AutoAudioSwitcher.Properties {
             }
         }
         /// <summary>
+        ///   Looks up a localized string similar to {0} monitor(s) have no playback device selected....
+        /// </summary>
+        internal static string UnconfiguredMonitorsWarning {
+            get {
+                return ResourceManager.GetString("UnconfiguredMonitorsWarning", resourceCulture);
+            }
+        }
+        /// <summary>
+        ///   Looks up a localized string similar to {0} - not configured.
+        /// </summary>
+        internal static string UnconfiguredMonitorCell {
+            get {
+                return ResourceManager.GetString("UnconfiguredMonitorCell", resourceCulture);
+            }
+        }
+        /// <summary>
         ///   Looks up a localized string similar to Check for updates on startup.
         /// </summary>
         internal static string CheckForUpdatesOnStartup {

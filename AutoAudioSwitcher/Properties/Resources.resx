@@ -256,6 +256,12 @@
   <data name="PlaybackDeviceNotFound" xml:space="preserve">
     <value>(device not connected: {0})</value>
   </data>
+  <data name="UnconfiguredMonitorsWarning" xml:space="preserve">
+    <value>{0} monitor(s) have no playback device selected. Audio will not switch for those monitors. Assign a device below, or pick "(Don't switch)" to silence this warning.</value>
+  </data>
+  <data name="UnconfiguredMonitorCell" xml:space="preserve">
+    <value>{0} - not configured</value>
+  </data>
 
   <!-- Settings window: updates page -->
   <data name="CheckForUpdatesOnStartup" xml:space="preserve">

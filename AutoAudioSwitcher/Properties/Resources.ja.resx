@@ -256,6 +256,12 @@
   <data name="PlaybackDeviceNotFound" xml:space="preserve">
     <value>（デバイスが接続されていません：{0}）</value>
   </data>
+  <data name="UnconfiguredMonitorsWarning" xml:space="preserve">
+    <value>{0} 台のモニターに再生デバイスが設定されていません。これらのモニターでは音声が切り替わりません。下でデバイスを指定するか、「（切り替えない）」を選ぶとこの警告は消えます。</value>
+  </data>
+  <data name="UnconfiguredMonitorCell" xml:space="preserve">
+    <value>{0} — 未設定</value>
+  </data>
 
   <!-- 設定ウィンドウ：更新 -->
   <data name="CheckForUpdatesOnStartup" xml:space="preserve">

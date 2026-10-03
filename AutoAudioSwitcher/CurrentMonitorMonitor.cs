@@ -24,9 +24,30 @@ internal sealed class CurrentMonitorMonitor : IDisposable
     // Sometimes when plugging in a display, Windows will briefly steal focus to that display before switching back
     private static readonly TimeSpan DebounceTimeout = TimeSpan.FromMilliseconds(50);
 
+    /// <summary>
+    /// Safety net for the global (mode A) routing path.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="EVENT_OBJECT_LOCATIONCHANGE"/> is documented as firing "when an object changes location or
+    /// size", which in practice is what tells us a window was dragged across monitors. But ShellExperienceHost
+    /// and other lightweight shell surfaces routinely create and destroy windows during ordinary desktop use,
+    /// and each of those tears down <em>all</em> of an out-of-context hook's global state. When that happens the
+    /// hook can stop delivering events for every process, silently and without error, leaving mode A stuck on
+    /// whichever monitor was active at the time.
+    /// </para>
+    /// <para>
+    /// Rather than depend on a notification stream we do not control, poll the foreground window on a slow
+    /// timer. The observable's <c>DistinctUntilChanged</c> downstream means this costs one <c>GetForegroundWindow</c>
+    /// plus a <c>GetMonitorInfo</c> per tick and produces no events at all while the user stays put.
+    /// </para>
+    /// </remarks>
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(1);
+
     private readonly BehaviorSubject<Monitor?> subject;
     private readonly ILogger logger;
     private readonly ConnectedMonitorsMonitor connectedMonitorsMonitor;
+    private readonly System.Threading.Timer pollTimer;
 
     private readonly WINEVENTPROC winEventProc;
 
@@ -51,6 +72,41 @@ internal sealed class CurrentMonitorMonitor : IDisposable
 
         systemForegroundHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, null, winEventProc, 0, 0, WINEVENT_OUTOFCONTEXT);
         objectLocationChangeHook = SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, null, winEventProc, 0, 0, WINEVENT_OUTOFCONTEXT);
+
+        // See PollInterval. This runs even when the hooks are alive, since we cannot detect a dead hook.
+        pollTimer = new System.Threading.Timer(
+            _ => PollForegroundMonitor(),
+            state: null,
+            dueTime: PollInterval,
+            period: PollInterval);
+    }
+
+    /// <summary>
+    /// Pushes the foreground window's monitor through <see cref="subject"/>, if it can be resolved.
+    /// </summary>
+    private void PollForegroundMonitor()
+    {
+        if (isDisposed)
+        {
+            return;
+        }
+
+        try
+        {
+            Monitor? monitor = GetCurrentMonitor();
+            if (monitor is not null)
+            {
+                // Verbose because this ticks once a second forever; it's here so a user reporting "mode A stopped
+                // following" can confirm from the log whether the safety net is still alive.
+                logger.Verbose("Polled the foreground monitor: {Monitor}", monitor.GdiDeviceName);
+                subject.OnNext(monitor);
+            }
+        }
+        catch (Exception ex)
+        {
+            // A timer callback that throws would tear down the process, so never let one escape.
+            logger.Error(ex, "Polling the foreground monitor failed");
+        }
     }
 
     /// <summary>
@@ -147,6 +203,7 @@ internal sealed class CurrentMonitorMonitor : IDisposable
 
             systemForegroundHook.Dispose();
             objectLocationChangeHook.Dispose();
+            pollTimer.Dispose();
 
             if (disposing)
             {

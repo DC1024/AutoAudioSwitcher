@@ -258,6 +258,12 @@
   <data name="PlaybackDeviceNotFound" xml:space="preserve">
     <value>（设备未连接：{0}）</value>
   </data>
+  <data name="UnconfiguredMonitorsWarning" xml:space="preserve">
+    <value>有 {0} 台显示器尚未选择播放设备，这些显示器不会触发音频切换。请在下方为其指定设备，或选择「（不切换）」以消除此提示。</value>
+  </data>
+  <data name="UnconfiguredMonitorCell" xml:space="preserve">
+    <value>{0} — 未配置</value>
+  </data>
 
   <!-- 设置窗口：更新页 -->
   <data name="CheckForUpdatesOnStartup" xml:space="preserve">
