@@ -45,6 +45,7 @@ DEVICE_STATE
 GetWindowRect
 GetWindowText
 GetWindowTextLength
+GetClassName
 IsIconic
 IsWindowVisible
 IsWindow

@@ -62,7 +62,7 @@ internal sealed class WindowPositionTracker : IDisposable
         if (window.IsNull)
         {
             logger.Verbose("Process {ProcessId} ({ProcessName}) has no top-level window.", processId, processName);
-            return null;
+            return ProcessFallback(processName);
         }
 
         // A minimized window's rectangle is not usable, so remember-and-recall instead of trusting it.
@@ -87,7 +87,7 @@ internal sealed class WindowPositionTracker : IDisposable
 
             logger.Verbose("Window {Window} of {ProcessName} is not visible and has no remembered monitor.",
                 window, processName);
-            return null;
+            return ProcessFallback(processName);
         }
 
         // MonitorFromPoint needs a point; the window's top-left corner is a reasonable representative and is what
@@ -100,7 +100,7 @@ internal sealed class WindowPositionTracker : IDisposable
         if (monitorHandle == 0)
         {
             logger.Verbose("No monitor contains the top-left corner of window {Window}.", window);
-            return null;
+            return ProcessFallback(processName);
         }
 
         MONITORINFOEXW monitorInfo = new()
@@ -111,12 +111,41 @@ internal sealed class WindowPositionTracker : IDisposable
         if (!GetMonitorInfo(monitorHandle, (MONITORINFO*)&monitorInfo))
         {
             logger.Warning("GetMonitorInfo failed: {Message}", Marshal.GetLastPInvokeErrorMessage());
-            return null;
+            return ProcessFallback(processName);
         }
 
         string gdiDeviceName = monitorInfo.szDevice.ToString();
         Remember(GetCacheKey(window, processName), gdiDeviceName);
+        RememberProcess(processName, gdiDeviceName);
         return gdiDeviceName;
+    }
+
+    /// <summary>
+    /// Last-resort recall keyed by process name alone.
+    /// </summary>
+    /// <remarks>
+    /// This exists because a window key is not always stable. Applications whose title is their content — a music
+    /// player showing the current track, an editor showing the open document, a browser tab — produce a
+    /// <em>new</em> window key every time that content changes, so the keyed entry above can miss even though we
+    /// have known where this application lives for hours. The process-name entry is coarser (it cannot tell two
+    /// windows of one process apart) but it is the difference between "remembers where the player was" and
+    /// "forgets the moment the song changes".
+    /// </remarks>
+    private string? ProcessFallback(string processName)
+    {
+        string processKey = ProcessKey(processName);
+
+        lock (sync)
+        {
+            if (lastKnownMonitor.TryGetValue(processKey, out string? remembered))
+            {
+                logger.Verbose("{ProcessName} has no usable window; using its last known monitor {Monitor}.",
+                    processName, remembered);
+                return remembered;
+            }
+        }
+
+        return null;
     }
 
     private static bool IsUsableRect(RECT rect) =>
@@ -178,10 +207,48 @@ internal sealed class WindowPositionTracker : IDisposable
 
     private static string GetCacheKey(HWND window, string processName)
     {
-        // Title disambiguates multiple windows of one process (e.g. two browser windows). It can change as the user
-        // browses, so the process name alone is the fallback identity.
+        // Prefer the window class name over the title: the class is assigned by the application and does not change
+        // as its content does, whereas a title often *is* the content (a music player's current track, a document
+        // name, a browser's active tab). Keying on the title meant a player produced a fresh entry every time the
+        // song changed, so the remembered position was almost never found again.
+        //
+        // The class alone cannot distinguish two windows of one process (they usually share a class), so the title is
+        // kept as a secondary hint. When the title is empty or unstable, the process-wide fallback in
+        // ProcessFallback still applies.
+        string className = GetClassNameSafe(window);
         string title = GetWindowTextSafe(window);
-        return string.IsNullOrEmpty(title) ? processName : $"{processName}\u0000{title}";
+
+        if (string.IsNullOrEmpty(className))
+        {
+            return string.IsNullOrEmpty(title) ? processName : $"{processName}\u0000{title}";
+        }
+
+        return string.IsNullOrEmpty(title)
+            ? $"{processName}\u0000{className}"
+            : $"{processName}\u0000{className}\u0000{title}";
+    }
+
+    /// <summary>
+    /// Reads a window's class name, which is stable for the lifetime of the window and is not affected by the
+    /// application's content.
+    /// </summary>
+    private static unsafe string GetClassNameSafe(HWND window)
+    {
+        try
+        {
+            const int Capacity = 256;
+            Span<char> buffer = stackalloc char[Capacity];
+
+            fixed (char* p = buffer)
+            {
+                int copied = GetClassName(window, p, Capacity);
+                return copied <= 0 ? "" : new string(p, 0, copied);
+            }
+        }
+        catch
+        {
+            return "";
+        }
     }
 
     private static unsafe string GetWindowTextSafe(HWND window)
@@ -226,8 +293,45 @@ internal sealed class WindowPositionTracker : IDisposable
     }
 
     /// <summary>
+    /// Records where <paramref name="processName"/> was last seen, under a key that does not depend on the window's
+    /// title. See <see cref="ProcessFallback"/> for why this exists.
+    /// </summary>
+    private void RememberProcess(string processName, string gdiDeviceName)
+    {
+        string processKey = ProcessKey(processName);
+
+        lock (sync)
+        {
+            if (lastKnownMonitor.TryGetValue(processKey, out string? existing) && existing == gdiDeviceName)
+            {
+                return;
+            }
+
+            lastKnownMonitor[processKey] = gdiDeviceName;
+        }
+
+        Save();
+    }
+
+    /// <summary>
+    /// The key under which a process-wide fallback is stored, kept in a namespace of its own.
+    /// </summary>
+    /// <remarks>
+    /// The <c>\u0001</c> separator cannot occur in a window key (those use <c>\u0000</c>, or no separator at all),
+    /// so a process entry can never be confused with a window entry — which matters because pruning treats them
+    /// differently: a window entry dies with its window, whereas the process entry must survive.
+    /// </remarks>
+    private static string ProcessKey(string processName) => $"{processName}\u0001*";
+
+    /// <summary>
     /// Drops remembered positions for windows that no longer exist, so the file does not grow without bound.
     /// </summary>
+    /// <remarks>
+    /// Process-wide entries are kept unconditionally: they are the recall path for applications whose window title
+    /// changes with their content, and there is no cheap way to tell whether such an application is merely idle
+    /// rather than gone. <see cref="Prune"/> is called on window-set changes, so they are re-validated constantly
+    /// anyway, and one entry per process is negligible growth.
+    /// </remarks>
     public void Prune(IEnumerable<(string ProcessName, string Title)> liveWindows)
     {
         var live = new HashSet<string>(
@@ -237,7 +341,8 @@ internal sealed class WindowPositionTracker : IDisposable
 
         lock (sync)
         {
-            string[] stale = [.. lastKnownMonitor.Keys.Where(k => !live.Contains(k))];
+            string[] stale = [.. lastKnownMonitor.Keys
+                .Where(k => !k.EndsWith("\u0001*", StringComparison.Ordinal) && !live.Contains(k))];
             if (stale.Length == 0)
             {
                 return;

@@ -54,10 +54,22 @@ internal sealed class PerAppAudioRouter : IDisposable
     private readonly ILogger logger;
 
     /// <summary>
-    /// The device each process was last routed to, so we don't rewrite an unchanged binding on every tick. Keyed by
-    /// process ID, which is stable for the lifetime of a process.
+    /// The last routing we <em>requested</em> per process, keyed by process ID.
     /// </summary>
-    private readonly Dictionary<uint, string> currentRouting = [];
+    /// <remarks>
+    /// <para>
+    /// This is deliberately a record of intent rather than a claim of success. <c>SetPersistedDefaultAudioEndpoint</c>
+    /// writes a persisted preference, and Windows does not reliably honour that preference when it later creates the
+    /// application's audio session — the preference reads back correctly while the app keeps playing through the
+    /// previous device. So a successful call is not evidence that the audio actually moved, and treating it as such
+    /// would mean never trying again.
+    /// </para>
+    /// <para>
+    /// The pair we store is therefore (device, session state at the time we asked). Re-issuing is driven by the
+    /// session state changing — see <see cref="NeedsRouting"/>.
+    /// </para>
+    /// </remarks>
+    private readonly Dictionary<uint, (string Device, AudioSessionState State)> currentRouting = [];
 
     public PerAppAudioRouter(
         AudioSessionMonitor sessionMonitor,
@@ -81,8 +93,9 @@ internal sealed class PerAppAudioRouter : IDisposable
             logger.Warning("Per-app audio routing is not available on this system; mode B will not move any audio.");
         }
 
-        // Re-evaluate whenever the set of audio sessions changes, and also on a slow heartbeat so window moves are
-        // picked up even when no session event fires.
+        // Re-evaluate whenever the set of audio sessions changes, and also on a slow heartbeat. The heartbeat is not
+        // just for window moves: because Windows applies a persisted per-app preference unreliably, a periodic
+        // re-issue is the only way to converge when the OS quietly declines to honour it.
         sessionMonitor.Sessions
             .Select(_ => Unit.Default)
             .Merge(Observable.Interval(TimeSpan.FromSeconds(3)).Select(_ => Unit.Default))
@@ -122,6 +135,9 @@ internal sealed class PerAppAudioRouter : IDisposable
 
         if (currentSettings.Mode is not AudioRoutingMode.PerApp)
         {
+            // Debug, not Verbose: "I switched to per-app mode and nothing happened" is otherwise impossible to
+            // tell apart from "per-app mode did nothing useful", and the two need very different answers.
+            logger.Debug("Current routing mode is {Mode}; skipping per-app routing.", currentSettings.Mode);
             return;
         }
 
@@ -175,9 +191,9 @@ internal sealed class PerAppAudioRouter : IDisposable
             return;
         }
 
-        if (currentRouting.TryGetValue(session.ProcessId, out string? alreadyAt) && alreadyAt == deviceName)
+        if (!NeedsRouting(session, deviceName))
         {
-            return; // Already routed here; writing again would be noise in the log and a needless COM call.
+            return;
         }
 
         string? deviceId = FindDeviceId(deviceName);
@@ -187,22 +203,52 @@ internal sealed class PerAppAudioRouter : IDisposable
             return;
         }
 
-        logger.Information("Routing {ProcessName} (pid {ProcessId}, on {Monitor}) to {Device}.",
-            session.ProcessName, session.ProcessId, monitor.FriendlyName, deviceName);
+        logger.Information("Routing {ProcessName} (pid {ProcessId}, on {Monitor}, session {State}) to {Device}.",
+            session.ProcessName, session.ProcessId, monitor.FriendlyName, session.State, deviceName);
 
         // All three roles, so whichever one the application plays through is covered. Windows keeps console and
         // multimedia in sync for most apps, but communications is often separate.
         bool ok = policyConfig.SetProcessPlaybackEndpoint(deviceId, session.ProcessId, 0, 1, 2);
 
-        if (ok)
+        // Record the attempt regardless of the result: the point is to remember what we last asked for and under
+        // which session state, not to assert that Windows complied. If the OS ignored us, a later state change or
+        // the heartbeat will bring us back here.
+        currentRouting[session.ProcessId] = (deviceName, session.State);
+
+        if (!ok)
         {
-            currentRouting[session.ProcessId] = deviceName;
-        }
-        else
-        {
-            logger.Verbose("Per-app routing for {ProcessName} did not take effect yet (no audio stream open?).",
+            logger.Debug("Per-app routing for {ProcessName} returned false (no audio session yet?); will retry.",
                 session.ProcessName);
         }
+    }
+
+    /// <summary>
+    /// Decides whether <paramref name="session"/> should be re-routed to <paramref name="deviceName"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Re-issue when any of these is true:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>The process has not been routed yet this run.</item>
+    /// <item>The target device changed (the user moved the window to the other display, or reassigned a device).</item>
+    /// <item>The session state changed since we last asked — in particular a transition into
+    /// <see cref="AudioSessionState.Active"/>, which is exactly when the application opens a fresh stream and
+    /// Windows re-reads the persisted preference. This is the moment our earlier request needs to be in place.</item>
+    /// </list>
+    /// <para>
+    /// Staying silent while nothing changes keeps the log readable and avoids needless COM traffic, without the
+    /// false confidence of "we succeeded once, so we are done".
+    /// </para>
+    /// </remarks>
+    private bool NeedsRouting(AudioSession session, string deviceName)
+    {
+        if (!currentRouting.TryGetValue(session.ProcessId, out var last))
+        {
+            return true;
+        }
+
+        return last.Device != deviceName || last.State != session.State;
     }
 
     /// <summary>
