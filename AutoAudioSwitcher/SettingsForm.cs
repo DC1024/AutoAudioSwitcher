@@ -68,6 +68,22 @@ internal sealed class SettingsForm : Form
     private DataGridView monitorGrid = null!;
     private Label unconfiguredWarningLabel = null!;
 
+    /// <summary>
+    /// Whether <see cref="PopulateMonitorGrid"/> should carry the grid's current cell values forward.
+    /// </summary>
+    /// <remarks>
+    /// True for the plug/unplug repopulation (so in-progress edits are not discarded), false when the grid is being
+    /// rebuilt from authoritative settings. Setting it false at the start of a rebuild keeps a stale grid from
+    /// overwriting the values just re-read from settings.
+    /// </remarks>
+    private bool preserveGridEdits;
+
+    /// <summary>
+    /// True while <see cref="PopulateMonitorGrid"/> is assigning cell values, so the resulting
+    /// <c>CellValueChanged</c> events are not mistaken for user edits.
+    /// </summary>
+    private bool isPopulatingMonitorGrid;
+
     // Updates page
     private CheckBox checkOnStartupCheckBox = null!;
     private Button checkNowButton = null!;
@@ -114,6 +130,26 @@ internal sealed class SettingsForm : Form
     }
 
     private readonly CompositeDisposable formSubscriptions = [];
+
+    /// <summary>
+    /// Re-reads the live settings every time the window is shown.
+    /// </summary>
+    /// <remarks>
+    /// The tray icon reuses a single instance instead of rebuilding the window per click, so the constructor's
+    /// <c>pending = settings.Value</c> only ever ran once. Without this, edits the user backed out of with Cancel
+    /// stayed in <c>pending</c> and reappeared on the next open, where clicking OK would silently commit them.
+    /// </remarks>
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        pending = settings.Value;
+        LoadFromSettings(pending);
+
+        // The grid still holds the previous session's cells; rebuild from settings instead of carrying them over.
+        preserveGridEdits = false;
+        PopulateMonitorGrid();
+    }
 
     private void BuildWindow()
     {
@@ -417,7 +453,9 @@ internal sealed class SettingsForm : Form
 
         monitorGrid.CellValueChanged += (_, e) =>
         {
-            if (e.RowIndex >= 0 && e.ColumnIndex == deviceColumn.Index)
+            // Suppressed while the grid is being populated: assigning cell values raises this for the intermediate
+            // state too, which logged a bogus "set to \"\"" before the real value landed.
+            if (!isPopulatingMonitorGrid && e.RowIndex >= 0 && e.ColumnIndex == deviceColumn.Index)
             {
                 CommitMonitorRow(e.RowIndex);
             }
@@ -623,54 +661,65 @@ internal sealed class SettingsForm : Form
 
     private void PopulateMonitorGrid()
     {
-        // Preserve any choices the user already made, since repopulating on a display change would otherwise
-        // discard them.
-        Dictionary<string, string> selections = [];
-        for (int row = 0; row < monitorGrid.Rows.Count; row++)
+        // pending is the authoritative state. The grid is only consulted when a display is plugged in or unplugged
+        // while the window is open, so that in-progress edits on other rows survive that repopulation.
+        Dictionary<string, string> selections = new(pending.Monitors);
+
+        if (preserveGridEdits)
         {
-            string? monitorName = monitorGrid.Rows[row].Cells[0].Value as string;
-            if (!string.IsNullOrEmpty(monitorName))
+            for (int row = 0; row < monitorGrid.Rows.Count; row++)
             {
-                selections[monitorName] = monitorGrid.Rows[row].Cells[1].Value as string ?? "";
+                string? monitorName = monitorGrid.Rows[row].Cells[0].Value as string;
+                if (!string.IsNullOrEmpty(monitorName) &&
+                    monitorGrid.Rows[row].Cells[1].Value is string { Length: > 0 } current &&
+                    current != Resources.DontSwitch)
+                {
+                    selections[monitorName] = current;
+                }
             }
         }
 
-        foreach (var (key, value) in pending.Monitors)
-        {
-            selections.TryAdd(key, value);
-        }
+        preserveGridEdits = true;
 
         string[] connectedNames = [.. connectedMonitorsMonitor.CurrentConnectedMonitors.Select(m => m.FriendlyName)];
         string[] knownDevices = [.. audioDeviceManager.CurrentPlaybackDeviceNames];
 
         monitorGrid.Rows.Clear();
+        isPopulatingMonitorGrid = true;
 
-        foreach (string monitorName in connectedNames.Order(StringComparer.CurrentCulture))
+        try
         {
-            int index = monitorGrid.Rows.Add();
-            monitorGrid.Rows[index].Cells[0].Value = monitorName;
-
-            selections.TryGetValue(monitorName, out string? configured);
-            configured ??= "";
-
-            if (string.IsNullOrEmpty(configured))
+            foreach (string monitorName in connectedNames.Order(StringComparer.CurrentCulture))
             {
-                monitorGrid.Rows[index].Cells[0].Style.ForeColor = Color.Firebrick;
+                int index = monitorGrid.Rows.Add();
+                monitorGrid.Rows[index].Cells[0].Value = monitorName;
+
+                selections.TryGetValue(monitorName, out string? configured);
+                configured ??= "";
+
+                if (string.IsNullOrEmpty(configured))
+                {
+                    monitorGrid.Rows[index].Cells[0].Style.ForeColor = Color.Firebrick;
+                }
+
+                monitorGrid.Rows[index].Cells[1].Value = BuildDeviceList(knownDevices, configured);
+
+                // The combo column can't be set per cell via the column's Items, so stash the list and set the value.
+                if (monitorGrid.Rows[index].Cells[1] is DataGridViewComboBoxCell cell)
+                {
+                    ConfigureComboCell(cell, knownDevices, configured);
+                }
             }
 
-            monitorGrid.Rows[index].Cells[1].Value = BuildDeviceList(knownDevices, configured);
-
-            // The combo column can't be set per cell via the column's Items, so stash the list and set the value.
-            if (monitorGrid.Rows[index].Cells[1] is DataGridViewComboBoxCell cell)
+            if (monitorGrid.Rows.Count == 0)
             {
-                ConfigureComboCell(cell, knownDevices, configured);
+                int index = monitorGrid.Rows.Add();
+                monitorGrid.Rows[index].Cells[0].Value = Resources.NoMonitorsDetected;
             }
         }
-
-        if (monitorGrid.Rows.Count == 0)
+        finally
         {
-            int index = monitorGrid.Rows.Add();
-            monitorGrid.Rows[index].Cells[0].Value = Resources.NoMonitorsDetected;
+            isPopulatingMonitorGrid = false;
         }
 
         RefreshUnconfiguredWarning();
